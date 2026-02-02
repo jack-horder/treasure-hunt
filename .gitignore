@@ -3,4 +3,9 @@ __pycache__
 *.db*
 node_modules
 .next
+.open-next
+.venv
+.dev.vars
+.vscode
+.wrangler
 

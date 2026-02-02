@@ -1,0 +1,19 @@
+services:
+  api:
+    build:
+      args:
+        BACKEND_API_PORT: $BACKEND_API_PORT
+    container_name: backend-api
+
+  cloudflared:
+    image: docker.io/cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      TUNNEL_TOKEN: $CLOUDFLARE_TUNNEL_TOKEN
+
+  minio:
+    image: docker.io/minio/minio
+    container_name: minio
+

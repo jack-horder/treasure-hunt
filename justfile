@@ -9,6 +9,10 @@ run-api-dev:
     echo "running api on port {{ backend-api-port }}"
     uv run --directory backend fastapi dev main.py
 
+run-api-prod:
+    echo "running production server on port {{ backend-api-port }}"
+    uv run --directory backend fastapi run main.py
+
 run-frontend-dev:
     bun --cwd frontend --bun next dev
 
