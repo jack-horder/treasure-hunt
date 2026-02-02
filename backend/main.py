@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Query, HTTPException
-from api.models.models import SessionDep, Hero, create_db_and_tables
+from models.models import SessionDep, Hero, create_db_and_tables
 from typing import Annotated
 from sqlmodel import select
 from contextlib import asynccontextmanager
