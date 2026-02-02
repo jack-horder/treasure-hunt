@@ -9,6 +9,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "main": ".open-next/worker.js",
+  "name": "project-th",
   "compatibility_date": "2025-12-01",
   "compatibility_flags": [
     "nodejs_compat",
