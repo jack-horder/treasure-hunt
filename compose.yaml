@@ -1,11 +1,11 @@
 services:
   api:
-    container_name: api
     build:
       context: .
       dockerfile: Dockerfile
       args:
         BACKEND_API_PORT: $BACKEND_API_PORT
+    restart: unless-stopped
     volumes:
       - ./backend/db:/app/db
     ports:
@@ -22,7 +22,6 @@ services:
 
   cloudflared:
     image: docker.io/cloudflare/cloudflared:latest
-    container_name: cloudflared
     restart: unless-stopped
     command: tunnel run
     environment:
@@ -31,8 +30,8 @@ services:
       - api
 
   minio:
+    restart: unless-stopped
     image: docker.io/minio/minio
-    container_name: minio
     ports:
       - "9000:9000" # MinIO API
       - "${MINIO_CONSOLE_PORT:-9001}:${MINIO_CONSOLE_PORT:-9001}" # MinIO Console
