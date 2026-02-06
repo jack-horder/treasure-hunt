@@ -5,17 +5,6 @@ services:
       dockerfile: Dockerfile
       args:
         BACKEND_API_PORT: $BACKEND_API_PORT
-    develop:
-      watch:
-        - action: rebuild
-          path: ./backend/uv.lock
-        - action: sync
-          path: ./backend
-          target: /app
-          ignore: # Optional but recommended
-            - __pycache__/
-            - .pytest_cache/
-            - uv.lock
     volumes:
       - ./backend/db:/app/db
     ports:
