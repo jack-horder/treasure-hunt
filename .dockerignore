@@ -3,4 +3,18 @@ __pycache__
 *.db*
 node_modules
 .next
+.env.*
+*.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+.git/
+.gitignore
+*.md
+.vscode/
+.idea/
 

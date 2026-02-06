@@ -1,9 +1,34 @@
 services:
   api:
+    container_name: api
     build:
+      dockerfile: Dockerfile
       args:
         BACKEND_API_PORT: $BACKEND_API_PORT
-    container_name: backend-api
+    develop:
+      watch:
+        - action: rebuild
+          path: ./backend/uv.lock
+        - action: sync
+          path: ./backend
+          target: /app
+          ignore: # Optional but recommended
+            - __pycache__/
+            - .pytest_cache/
+            - uv.lock
+    volumes:
+      - ./backend/db:/app/db
+    ports:
+      - "${BACKEND_API_PORT:-8000}:${BACKEND_API_PORT:-8000}"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_API_PORT: ${MINIO_API_PORT}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      SQLALCHEMY_DATABASE_URI: ${SQLALCHEMY_DATABASE_URI}
+
+    depends_on:
+      - minio
 
   cloudflared:
     image: docker.io/cloudflare/cloudflared:latest
@@ -12,8 +37,21 @@ services:
     command: tunnel run
     environment:
       TUNNEL_TOKEN: $CLOUDFLARE_TUNNEL_TOKEN
+    depends_on:
+      - api
 
   minio:
     image: docker.io/minio/minio
     container_name: minio
+    ports:
+      - "9000:9000" # MinIO API
+      - "${MINIO_CONSOLE_PORT:-9001}:${MINIO_CONSOLE_PORT:-9001}" # MinIO Console
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    command: server /data --console-address ":${MINIO_CONSOLE_PORT:-9001}"
+    volumes:
+      - minio_data:/data # Persist data
 
+volumes:
+  minio_data:

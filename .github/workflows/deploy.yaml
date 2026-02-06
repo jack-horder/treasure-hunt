@@ -1,0 +1,82 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    environment:
+      name: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging') }}
+
+    env:
+      COMPOSE_PROJECT_NAME: ${{ github.event.inputs.environment || (github.ref == 'refs/heads/main' && 'production' || 'staging') }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set environment name
+        id: set-env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "ENV_NAME=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "ENV_NAME=production" >> $GITHUB_OUTPUT
+          else
+            echo "ENV_NAME=staging" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          ${{ secrets.ENV_FILE }}
+          EOF
+        working-directory: ${{ github.workspace }}
+
+      - name: Stop existing containers
+        run: |
+          COMPOSE_PROJECT_NAME=${{ steps.set-env.outputs.ENV_NAME }} podman compose down || true
+        continue-on-error: true
+
+      - name: Pull latest images
+        run: |
+          COMPOSE_PROJECT_NAME=${{ steps.set-env.outputs.ENV_NAME }} podman compose pull || true
+        continue-on-error: true
+
+      - name: Build and start services
+        run: |
+          COMPOSE_PROJECT_NAME=${{ steps.set-env.outputs.ENV_NAME }} podman compose up -d --build
+
+      - name: Check service health
+        run: |
+          sleep 10
+          COMPOSE_PROJECT_NAME=${{ steps.set-env.outputs.ENV_NAME }} podman compose ps
+
+      - name: Show logs
+        if: failure()
+        run: |
+          COMPOSE_PROJECT_NAME=${{ steps.set-env.outputs.ENV_NAME }} podman compose logs --tail=50
+
+      - name: Clean up old images
+        run: |
+          podman image prune -af --filter "until=24h" || true
+        continue-on-error: true
+
+      - name: Deployment summary
+        run: |
+          echo "🚀 Deployed to: ${{ steps.set-env.outputs.ENV_NAME }}"
+          echo "📦 Container prefix: ${{ steps.set-env.outputs.ENV_NAME }}_"
+          echo "🌿 Branch: ${{ github.ref_name }}"
