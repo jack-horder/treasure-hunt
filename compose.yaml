@@ -2,6 +2,7 @@ services:
   api:
     container_name: api
     build:
+      context: .
       dockerfile: Dockerfile
       args:
         BACKEND_API_PORT: $BACKEND_API_PORT
